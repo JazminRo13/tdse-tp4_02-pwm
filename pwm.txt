@@ -1,0 +1,73 @@
+ANÁLISIS DE LAS CONFIGURACIONES TIM3 Y RCC 
+
+1. CONFIGURACIÓN DEL TIM3
+
+El TIM3 es un temporizador de 16 bits. En el archivo IOC se observa:
+
+Counter Settings:
+- Prescaler (PSC): 0. El reloj del contador no se divide (PSC + 1 = 1).
+- Counter Mode: Up. Conteo ascendente.
+- Counter Period (ARR): 65535. Cuenta desde 0 hasta 65535.
+- Internal Clock Division: No Division.
+- Auto-reload preload: Disable. No se utiliza precarga del registro ARR.
+
+Trigger Output (TRGO):
+- Master/Slave Mode: Disable.
+- Trigger Event Selection: Reset.
+
+PWM Generation Channel 1:
+- Mode: PWM mode 1.
+- Pulse (CCR1): 0.
+- Output Compare Preload: Enable.
+- Fast Mode: Disable.
+- CH Polarity: High (activo en nivel alto).
+- Pin de salida: PA6 (TIM3_CH1).
+
+El ciclo de trabajo inicial es D = CCR1 / (ARR + 1) * 100 % = 0 %.
+Por lo tanto, inicialmente la salida PWM permanece en nivel bajo.
+
+2. CONFIGURACIÓN DEL RCC
+
+RCC Mode:
+- HSE (High Speed External): Crystal/Ceramic Resonator.
+- LSE (Low Speed External): Crystal/Ceramic Resonator.
+- Master Clock Output (MCO): deshabilitado.
+
+System Parameters:
+- VDD voltage: 3.3 V.
+- Prefetch Buffer: Enabled.
+- Flash Latency: 2 WS (3 CPU cycles, según la interfaz).
+
+RCC Parameters:
+- HSI Calibration Value: 16.
+- HSE Startup Timeout: 100 ms.
+- LSE Startup Timeout: 5000 ms.
+
+Según la captura de Clock Configuration:
+- HSE: 8 MHz.
+- PLL: HSE / 1 * 16 / 2 = 64 MHz (la entrada PLL mostrada es 4 MHz, proveniente de HSE/2).
+- SYSCLK: 64 MHz, proveniente del PLL.
+- AHB Prescaler: /1; HCLK: 64 MHz.
+- APB1 Prescaler: /2; PCLK1: 32 MHz.
+- APB1 Timer Clock: 64 MHz.
+- APB2 Prescaler: /1; PCLK2: 64 MHz.
+
+3. CÁLCULO DE LA FRECUENCIA PWM
+
+El TIM3 pertenece al bus APB1. Como su prescaler es /2, el reloj de los temporizadores APB1 es el doble de PCLK1:
+
+f_TIM3 = 2 * 32 MHz = 64 MHz.
+
+Para PWM en conteo ascendente:
+
+f_PWM = f_TIM3 / [(PSC + 1) * (ARR + 1)]
+      = 64.000.000 / [(0 + 1) * (65535 + 1)]
+      = 976,5625 Hz.
+
+T_PWM = 1 / f_PWM = 0,001024 s = 1,024 ms.
+
+Estos valores representan la frecuencia y el período configurados del temporizador. Aunque la frecuencia es 976,56 Hz, con CCR1 = 0 la salida inicial tiene duty cycle 0 % y no presenta pulsos altos.
+
+4. CONCLUSIÓN
+
+El TIM3 está configurado en modo PWM 1 sobre el canal 1 (PA6), con conteo ascendente, PSC = 0, ARR = 65535 y pulso inicial CCR1 = 0. El RCC proporciona al TIM3 un reloj de 64 MHz, derivado de SYSCLK y de la configuración del bus APB1. De estos parámetros resulta una frecuencia PWM de aproximadamente 976,56 Hz y un período de 1,024 ms. El ciclo de trabajo inicial es 0 %. 

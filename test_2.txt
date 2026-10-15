@@ -1,0 +1,61 @@
+TP4 – PWM: TEST 2
+
+Análisis y comparación con el Test 1
+
+1. CONFIGURACIÓN DEL CÓDIGO
+Para ejecutar el Test 2 se selecciona:
+#define TEST_NUMBER TEST_2
+
+En test2_tick() se inicializa:
+static uint16_t period = PERIOD/4;
+
+La función setPWM(htim3, TIM_CHANNEL_1, period, period/2) establece un valor de comparación equivalente a aproximadamente la mitad del período. Posteriormente, period = period + step cambia el período en pasos de 100, invirtiendo el sentido de variación al alcanzar los límites previstos en el código.
+
+2. CÁLCULO TEÓRICO INICIAL DEL TEST 2
+Según el árbol de relojes: f_TIM3 = 64 MHz.
+Prescaler del TIM3: PSC = 0.
+Valor inicial entero de ARR: 65535/4 = 16383 (división entera).
+
+f_PWM = f_TIM3 / [(PSC + 1)(ARR + 1)]
+f_PWM = 64.000.000 / [(0 + 1)(16383 + 1)]
+f_PWM = 3906,25 Hz ≈ 3,906 kHz
+
+T_PWM = 1/f_PWM = 0,000256 s = 0,256 ms = 256 µs.
+
+Estos son los valores teóricos INICIALES; no son constantes durante el Test 2. Al cambiar ARR, el período cambia y la frecuencia varía en sentido inverso. El programa mantiene el duty cycle cercano al 50 % porque fija pulse = period/2.
+
+3. MEDICIÓN EXPERIMENTAL DEL TEST 2
+En la captura del osciloscopio correspondiente al Test 2 se leen:
+- Período: 415,0 µs = 0,415 ms.
+- Frecuencia: 2,41 kHz ≈ 2410 Hz.
+- Forma de onda: rectangular, con tiempo en nivel alto cercano a la mitad del período.
+
+Comprobación: 1/(415 × 10^-6 s) ≈ 2409,64 Hz, coherente con la lectura de 2,41 kHz.
+
+La diferencia entre los valores teóricos iniciales y los medidos no implica por sí misma un error: el osciloscopio captura un instante de la variación programada del período. Por eso no corresponde calcular un error porcentual entre 256 µs y 415 µs como si se tratara de una configuración fija.
+
+4. COMPARACIÓN CON EL TEST 1
+Parámetro                         TEST 1                 TEST 2
+-----------------------------------------------------------------------
+Período teórico inicial           1,024 ms               0,256 ms
+Frecuencia teórica inicial        976,56 Hz              3906,25 Hz
+Período medido                    1,026 ms               0,415 ms
+Frecuencia medida                 975 Hz                 2,41 kHz
+Período durante el ensayo         Constante              Variable
+Frecuencia durante el ensayo      Constante              Variable
+Duty cycle durante el ensayo      Variable               Aproximadamente 50 %
+Parámetro modificado en app.c     active (pulso)         period (ARR)
+
+En el Test 1, test1_tick() conserva period = 65535 y modifica active de manera progresiva. Por eso cambia la proporción del tiempo en alto sin alterar el período nominal. La medición de 1,026 ms es próxima al valor teórico de 1,024 ms.
+
+En el Test 2, test2_tick() modifica period y ajusta el pulso a period/2. Por eso cambia la frecuencia de repetición de los pulsos, pero la proporción de tiempo en alto permanece aproximadamente constante.
+
+5. EFECTO ESPERADO SOBRE EL LED
+En el Test 1, al variar el duty cycle, debería observarse una variación progresiva del brillo del LED conectado a PA6 mediante una resistencia limitadora.
+
+En el Test 2, como el duty cycle se mantiene cerca del 50 %, el brillo promedio debería permanecer aproximadamente constante, aunque cambie la frecuencia PWM. Esta observación se presenta como resultado esperado.
+
+7. CONCLUSIÓN
+El Test 2 genera una señal PWM rectangular con un duty cycle cercano al 50 % y un período variable. Los valores teóricos iniciales, calculados con ARR = 16383 y f_TIM3 = 64 MHz, son T = 0,256 ms y f = 3906,25 Hz. En el osciloscopio se registraron T = 0,415 ms y f = 2,41 kHz, valores compatibles con una captura realizada mientras el programa modifica el período.
+
+En comparación, el Test 1 mantiene constante el período nominal de 1,024 ms y modifica el duty cycle. Así, ambos ensayos permiten distinguir el control del ancho relativo del pulso (Test 1) del control del período y la frecuencia de la PWM (Test 2).

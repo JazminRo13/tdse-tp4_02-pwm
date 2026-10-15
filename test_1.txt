@@ -1,0 +1,30 @@
+TP4 - PWM: TEST 1
+
+1. CONFIGURACIÓN DEL CÓDIGO
+En app.c se selecciona #define TEST_NUMBER TEST_1.
+DELAY_TICKS = 4; STEP = 100; PERIOD = 65535.
+La función app_update() ejecuta test1_tick(). En esta función, period permanece constante en 65535, mientras active cambia en pasos de 100, invirtiendo el sentido al aproximarse a los extremos. setPWM() configura TIM3 canal 1 en PWM mode 1 con polaridad activa alta.
+
+2. PERÍODO Y FRECUENCIA
+De la configuración del reloj: f_TIM3 = 64 MHz; PSC = 0; ARR = 65535.
+f_PWM = f_TIM3 / [(PSC+1)(ARR+1)] = 64 000 000 / 65536 = 976,56 Hz.
+T_PWM = 1/f_PWM = 1,024 ms.
+El período nominal NO se modifica en el Test 1 porque period no cambia.
+
+3. DUTY CYCLE
+El duty cycle es el porcentaje del período durante el cual la salida está en nivel alto:
+D = (T_ON / T_PWM) * 100 %.
+Aproximadamente, D = active / (period+1) * 100 %.
+El código modifica active cada 4 ticks de HAL_GetTick(), aumentando y disminuyendo el ancho del pulso. Por tanto, el duty cycle SÍ cambia progresivamente entre valores cercanos al 0 % y al 100 %.
+
+4. OBSERVACIÓN CON OSCILOSCOPIO
+La punta se conecta a PA6 (D12 de la NUCLEO-F103RB) y la referencia a GND.
+Se observó una señal rectangular cuyo ancho varía con el tiempo.
+En la captura se obtiene período de 1.026ms y frecuencia aproximada de 975 Hz, coincide muy bien con el período teórico (diferencia relativa aproximada de 0,20 %). 
+
+5. LED Y RESISTENCIA
+Se preparó una conexión en serie PA6 -> resistencia de aproximadamente 330 ohm -> LED verde -> GND.
+Se observa que el LED aumenta y disminuye progresivamente su brillo según el duty cycle.
+
+6. CONCLUSIÓN
+En el Test 1 se observó una señal PWM rectangular en PA6 cuyo ancho de pulso varía progresivamente. El código mantiene constante el período nominal de 1,024 ms (976,56 Hz) y modifica el duty cycle mediante el valor active. La captura del osciloscopio resulta coherente con el cálculo teórico. 
